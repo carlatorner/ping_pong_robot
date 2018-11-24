@@ -3,13 +3,22 @@ project(ping_pong_robot)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   move_base
+  actionlib
+  move_base_msgs
+  roscpp
+  rospy
+  image_transport
+  cv_bridge
 )
+
+
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -101,11 +110,11 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES ping_pong_robot
-#  CATKIN_DEPENDS move_base
-#  DEPENDS system_lib
-)
+      CATKIN_DEPENDS
+            roscpp
+            rospy
+            image_transport
+            cv_bridge)
 
 ###########
 ## Build ##
@@ -195,3 +204,27 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+SET(SRCS
+      src/camera_node.cpp
+      src/camera.cpp)
+
+# Declare a cpp executable for pipol_tracker_node
+add_executable(camera ${SRCS})
+add_executable(simple_navigation_goals src/simple_navigation_goals.cpp)
+add_executable(kidnapping src/kidnapping.cpp)
+
+#add_dependencies(pipol_tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+target_link_libraries(camera ${OpenCV_LIBS} ${catkin_LIBRARIES})
+target_link_libraries(simple_navigation_goals ${catkin_LIBRARIES})
+target_link_libraries(kidnapping ${catkin_LIBRARIES})
+
+#install binaries
+install(TARGETS camera
+     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+#Share launch and configs
+foreach(dir launch config)
+    install(DIRECTORY ${dir}/
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
+endforeach(dir)
